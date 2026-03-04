@@ -19,6 +19,7 @@ import IsDetayEkrani from '../ekranlar/IsDetayEkrani';
 import SohbetEkrani from '../ekranlar/SohbetEkrani';
 import OdemeEkrani from '../ekranlar/OdemeEkrani';
 import ProfilEkrani from '../ekranlar/ProfilEkrani';
+import SeraKayitlariEkrani from '../ekranlar/SeraKayitlariEkrani';
 
 import Renkler from '../tema/renkler';
 import { kaydedilmisOturumAl, piSDKBaslat } from '../pi/PiAuthService';
@@ -70,7 +71,19 @@ function AnaTabNavigator() {
                 }}
             />
 
-            {/* 3. Tab: Profilim */}
+            {/* 3. Tab: Sera Yönetimi */}
+            <Tab.Screen
+                name="SeraYonetimi"
+                component={SeraKayitlariEkrani}
+                options={{
+                    tabBarLabel: 'Sera',
+                    tabBarIcon: ({ color, size }) => (
+                        <Text style={{ fontSize: size - 4, color }}>🌿</Text>
+                    ),
+                }}
+            />
+
+            {/* 4. Tab: Profilim */}
             <Tab.Screen
                 name="Profilim"
                 component={ProfilEkrani}

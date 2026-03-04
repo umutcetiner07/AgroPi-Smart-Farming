@@ -36,6 +36,7 @@ export const KoleksiyonYollari = {
     UZMANLAR: 'uzmanlar',
     ODEMELER: 'odemeler',
     YORUMLAR: 'yorumlar',
+    SERA_KAYITLARI: 'greenhouse_logs',
 };
 
 export default app;
