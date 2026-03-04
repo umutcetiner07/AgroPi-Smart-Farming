@@ -51,8 +51,9 @@ export const odemeBaslat = ({
                 ilanId,
                 isverenId,
                 uzmanId,
+                appId: PiSabitleri.APP_ID,          // 68a6fed62cb50254172b6593
                 platform: 'AgroPi-Marketplace',
-                ortam: PiSabitleri.ORTAM,   // 'sandbox'
+                ortam: PiSabitleri.ORTAM,
                 testnet: PiSabitleri.ORTAM === 'sandbox',
             },
         };

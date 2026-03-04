@@ -20,6 +20,7 @@ export const piSDKBaslat = () => {
             global.Pi.init({
                 version: '2.0',
                 sandbox: PiSabitleri.ORTAM === 'sandbox',
+                appId: PiSabitleri.APP_ID,   // 68a6fed62cb50254172b6593
             });
             console.log(`[AgroPi] Pi SDK başlatıldı — Mod: ${PiSabitleri.ORTAM.toUpperCase()}`);
         } else {
