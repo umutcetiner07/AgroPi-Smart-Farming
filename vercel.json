@@ -1,0 +1,1 @@
+{"version": 2, "rewrites": [{"source": "/validation-key.txt", "destination": "/validation-key.txt"}, {"source": "/(.*)", "destination": "/index.html"}]}
