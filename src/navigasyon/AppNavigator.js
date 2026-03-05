@@ -74,7 +74,7 @@ function AnaTabNavigator() {
             {/* 3. Tab: Sera Yönetimi */}
             <Tab.Screen
                 name="SeraYonetimi"
-                component={SeraKayitlariEkrani}
+                children={(props) => <SeraKayitlariEkrani {...props} kullanici={piKullanici} />}
                 options={{
                     tabBarLabel: 'Sera',
                     tabBarIcon: ({ color, size }) => (
@@ -148,26 +148,18 @@ function UygulamaYigini() {
 }
 
 // ── Ana Navigasyon ─────────────────────────────────────────────
-export default function AppNavigator() {
-    const [piKullanici, setPiKullanici] = useState(null);
-    const [yukleniyor, setYukleniyor] = useState(true);
+export default function AppNavigator({ kullanici }) {
+    const [piKullanici, setPiKullanici] = useState(kullanici || null);
+    const [yukleniyor, setYukleniyor] = useState(false);
 
     useEffect(() => {
-        const baslat = async () => {
-            try {
-                piSDKBaslat();
-                const kayitliKullanici = await kaydedilmisOturumAl();
-                if (kayitliKullanici) {
-                    setPiKullanici(kayitliKullanici);
-                }
-            } catch (e) {
-                console.warn('[AgroPi] Oturum yükleme hatası:', e.message);
-            } finally {
-                setYukleniyor(false);
-            }
-        };
-        baslat();
-    }, []);
+        // App.js'den gelen kullanıcı bilgisini kullan
+        if (kullanici) {
+            setPiKullanici(kullanici);
+            console.log('[AgroPi] AppNavigator - Pi kullanıcısı ayarlandı:', kullanici);
+        }
+        setYukleniyor(false);
+    }, [kullanici]);
 
     if (yukleniyor) {
         return (

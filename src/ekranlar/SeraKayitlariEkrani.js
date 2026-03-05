@@ -1,14 +1,13 @@
 // AgroPi Marketplace — Sera Kayıtları Ekranı (Greenhouse Logs)
 // Adım 9: pH Seviyesi, EC Seviyesi, Bitki Büyüme Durumu → greenhouse_logs koleksiyonu
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
     StatusBar, ScrollView, Animated, Alert, ActivityIndicator, FlatList,
 } from 'react-native';
 import { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { kaydedilmisOturumAl } from '../pi/PiAuthService';
 import Renkler from '../tema/renkler';
 
 // Demo kayıtlar (Firebase bağlanana kadar gösterilir)
@@ -84,23 +83,30 @@ function KayitKarti({ kayit, gecikme }) {
     );
 }
 
-export default function SeraKayitlariEkrani({ navigation }) {
+export default function SeraKayitlariEkrani({ navigation, route, kullanici }) {
     const [phSeviyesi, setPhSeviyesi] = useState('');
     const [ecSeviyesi, setEcSeviyesi] = useState('');
     const [bitkiBuyumeDurumu, setBitkiBuyumeDurumu] = useState('');
     const [yukleniyor, setYukleniyor] = useState(false);
     const [kayitlar, setKayitlar] = useState(DEMO_KAYITLAR);
     const [listeYukleniyor, setListeYukleniyor] = useState(false);
-    const [piKullanici, setPiKullanici] = useState(null);
+    
+    // App.js'den gelen Pi kullanıcısı bilgisi (route.params veya doğrudan prop)
+    const piKullanici = route?.params?.kullanici || kullanici || null;
 
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         Animated.timing(fadeAnim, { toValue: 1, duration: 450, useNativeDriver: true }).start();
         kayitlariYukle();
-        // Pi oturumunu al
-        kaydedilmisOturumAl().then(k => { if (k) setPiKullanici(k); });
-    }, []);
+        
+        // Pi kullanıcı bilgisini logla
+        if (piKullanici) {
+            console.log('[AgroPi] SeraKayitlariEkrani - Pi kullanıcısı:', piKullanici);
+        } else {
+            console.warn('[AgroPi] SeraKayitlariEkrani - Pi kullanıcı bilgisi bulunamadı');
+        }
+    }, [piKullanici]);
 
     const kayitlariYukle = async () => {
         if (!db) return;
@@ -124,6 +130,12 @@ export default function SeraKayitlariEkrani({ navigation }) {
     };
 
     const kayitKaydet = async () => {
+        // Pi kullanıcısı kontrolü
+        if (!piKullanici || !piKullanici.uid) {
+            Alert.alert('Giriş Gerekli', 'Veri kaydetmek için Pi Network ile giriş yapmalısınız.');
+            return;
+        }
+
         const ph = parseFloat(phSeviyesi);
         const ec = parseFloat(ecSeviyesi);
 
@@ -137,14 +149,19 @@ export default function SeraKayitlariEkrani({ navigation }) {
         setYukleniyor(true);
         try {
             const yeniKayit = {
-                phSeviyesi: ph,
-                ecSeviyesi: ec,
+                // İstenen formatta Pi Network ID ve veriler
+                pi_id: piKullanici.uid,
+                ph_value: ph,
+                ec_value: ec,
+                timestamp: serverTimestamp(),
+                
+                // Ek bilgiler
                 bitkiBuyumeDurumu: bitkiBuyumeDurumu.trim(),
-                olusturmaTarihi: serverTimestamp(),
-                // Pi Network kullanıcı bilgileri
-                piKullaniciId: piKullanici?.kullaniciId ?? null,
-                piKullaniciAdi: piKullanici?.kullaniciAdi ?? null,
+                pi_username: piKullanici.username,
+                olusturmaTarihi: serverTimestamp(), // Mevcut kodla uyumlu
             };
+
+            console.log('[AgroPi] Kaydedilen veri:', yeniKayit);
 
             if (db) {
                 await addDoc(collection(db, 'greenhouse_logs'), yeniKayit);
@@ -155,6 +172,7 @@ export default function SeraKayitlariEkrani({ navigation }) {
                 const localKayit = {
                     ...yeniKayit,
                     id: `local_${Date.now()}`,
+                    timestamp: { seconds: Date.now() / 1000 },
                     olusturmaTarihi: { seconds: Date.now() / 1000 },
                 };
                 setKayitlar(onceki => [localKayit, ...onceki]);
@@ -164,7 +182,7 @@ export default function SeraKayitlariEkrani({ navigation }) {
             setEcSeviyesi('');
             setBitkiBuyumeDurumu('');
 
-            Alert.alert('Kaydedildi', 'Sera kaydı başarıyla eklendi.');
+            Alert.alert('Başarılı', 'Veri Başarıyla Kaydedildi');
         } catch (hata) {
             console.error('[AgroPi] Sera kayıt hatası:', hata);
             Alert.alert('Hata', 'Kayıt eklenemedi. Lütfen tekrar deneyin.');

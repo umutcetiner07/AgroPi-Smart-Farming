@@ -23,7 +23,13 @@
             "package": "com.agropi.marketplace"
         },
         "web": {
-            "favicon": "./assets/favicon.png"
+            "favicon": "./assets/favicon.png",
+            "bundler": "metro",
+            "output": "static",
+            "config": {
+                "publicPath": "/",
+                "baseHtmlPath": "./index.html"
+            }
         },
         "plugins": [
             "expo-font",
