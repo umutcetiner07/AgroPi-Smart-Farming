@@ -5,9 +5,137 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgroPi Marketplace</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #12091F;
+            color: #F0C040;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            max-width: 400px;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 48px;
+            margin: 0;
+        }
+        p {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #7A6A9A;
+            margin-top: 10px;
+        }
+        .button {
+            background-color: #F0C040;
+            color: #12091F;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #D4A836;
+        }
+        .button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
-    <h1>🌾π</h1>
-    <p>AgroPi Marketplace</p>
+    <div class="container">
+        <h1>🌾π</h1>
+        <p>AgroPi Marketplace</p>
+        <p class="subtitle">AI destekli topraksız tarım platformu</p>
+        
+        <button class="button" id="connectBtn" onclick="connectPi()">
+            Pi Network ile Bağlan
+        </button>
+        
+        <button class="button" id="buyBtn" onclick="buyProduct()" style="display: none; background-color: #4CAF50;">
+            Satın Al (0.1 π)
+        </button>
+    </div>
+
+    <script>
+        let piUser = null;
+
+        async function connectPi() {
+            const btn = document.getElementById('connectBtn');
+            btn.disabled = true;
+            btn.textContent = 'Bağlanıyor...';
+
+            try {
+                if (typeof window.Pi !== 'undefined') {
+                    await window.Pi.init({ version: "2.0" });
+                    
+                    const authResult = await window.Pi.authenticate(['username', 'uid'], {
+                        onIncompletePaymentFound: (payment) => {
+                            console.log('Tamamlanmamış ödeme:', payment);
+                        }
+                    });
+
+                    piUser = authResult.user;
+                    btn.style.display = 'none';
+                    document.getElementById('buyBtn').style.display = 'block';
+                    
+                    console.log('Pi kullanıcı:', piUser);
+                } else {
+                    alert('Pi SDK bulunamadı!');
+                }
+            } catch (error) {
+                console.error('Pi bağlantı hatası:', error);
+                alert('Bağlantı hatası: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Pi Network ile Bağlan';
+            }
+        }
+
+        async function buyProduct() {
+            if (!piUser) {
+                alert('Önce Pi Network ile bağlanın!');
+                return;
+            }
+
+            const btn = document.getElementById('buyBtn');
+            btn.disabled = true;
+            btn.textContent = 'Ödeme yapılıyor...';
+
+            try {
+                const payment = await window.Pi.createPayment({
+                    amount: 0.10,
+                    memo: "AgroPi ürün satın alma",
+                    metadata: { 
+                        userId: piUser.uid,
+                        product: "AgroPi Premium"
+                    }
+                });
+
+                console.log('Ödeme başarılı:', payment);
+                alert('Ödeme başarılı! Teşekkürler.');
+                btn.textContent = 'Satın Alındı ✓';
+                
+            } catch (error) {
+                console.error('Ödeme hatası:', error);
+                alert('Ödeme hatası: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Satın Al (0.1 π)';
+            }
+        }
+    </script>
 </body>
 </html>
