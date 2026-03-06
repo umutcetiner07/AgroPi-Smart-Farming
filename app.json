@@ -31,11 +31,6 @@
                 "baseHtmlPath": "./index.html"
             }
         },
-        "plugins": [
-            "expo-font",
-            "expo-image-picker",
-            "expo-location",
-            "expo-constants"
-        ]
+        "plugins": []
     }
 }
