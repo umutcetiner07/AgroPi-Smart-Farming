@@ -65,9 +65,7 @@ export default function App() {
                 // Pi Network başlatma (Pi Browser içinde)
                 if (typeof window !== 'undefined' && window.Pi) {
                     await window.Pi.init({
-                        version: PiSabitleri.ORTAM === 'production' ? '2.0' : '1.0',
-                        sandbox: PiSabitleri.ORTAM === 'sandbox',
-                        appId: PiSabitleri.APP_ID
+                        version: "2.0"
                     });
                     console.log('[AgroPi] Pi Network SDK başarıyla başlatıldı');
                 } else {
