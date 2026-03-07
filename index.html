@@ -4,220 +4,167 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <title>AgroPi Marketplace</title>
+    <title>AgroPi Marketplace - AI Destekli Topraksız Tarım</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #12091F;
-            color: #F0C040;
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        .container {
-            max-width: 400px;
-            padding: 20px;
-        }
-        h1 {
-            font-size: 48px;
-            margin: 0;
-        }
-        p {
-            font-size: 18px;
-            margin-top: 20px;
-        }
-        .subtitle {
-            font-size: 14px;
-            color: #7A6A9A;
-            margin-top: 10px;
-        }
-        .button {
-            background-color: #F0C040;
-            color: #12091F;
-            border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 30px;
-            transition: background-color 0.3s;
-        }
-        .button:hover {
-            background-color: #D4A836;
-        }
-        .button:disabled {
-            background-color: #666;
-            cursor: not-allowed;
-        }
-        .status {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #7A6A9A;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="container">
-        <h1>🌾π</h1>
-        <p>AgroPi Marketplace</p>
-        <p class="subtitle">AI destekli topraksız tarım platformu</p>
-        
-        <button class="button" id="connectBtn" onclick="connectPi()">
-            Pi Network ile Bağlan
-        </button>
-        
-        <button class="button" id="buyBtn" onclick="buyProduct()" style="display: none; background-color: #4CAF50;">
-            Satın Al (0.1 π)
-        </button>
-        
-        <div class="status" id="status"></div>
-    </div>
+<body class="agropi-gradient min-h-screen">
+    <!-- Header -->
+    <header class="bg-card border-b border-border">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-2xl font-bold text-primary">🌾π</h1>
+                    <span class="text-lg font-semibold">AgroPi Marketplace</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="connectionStatus" class="status-indicator status-offline">Çevrimdışı</span>
+                    <button id="connectBtn" class="payment-button" onclick="connectPi()">
+                        Pi Network ile Bağlan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
 
-    <script>
-        // Pi Ecosystem AI API Key
-        const PI_API_KEY = '5inedspkbqoa4bz4tljrimau6rl7yvwnwkeinebxrgy2jwtiryyuh3g15jxyqjqj';
-        
-        let piUser = null;
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Dashboard Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-center mb-8 text-primary">AI Destekli Tarım Kontrol Paneli</h2>
+            
+            <!-- Sensor Cards -->
+            <div class="dashboard-grid mb-8">
+                <!-- pH Sensor -->
+                <div class="sensor-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">pH Seviyesi</h3>
+                        <span class="status-indicator status-online">Aktif</span>
+                    </div>
+                    <div class="sensor-value">6.8</div>
+                    <div class="sensor-label">İdeal Değer: 5.5 - 6.5</div>
+                </div>
 
-        async function connectPi() {
-            const btn = document.getElementById('connectBtn');
-            const status = document.getElementById('status');
-            btn.disabled = true;
-            btn.textContent = 'Bağlanıyor...';
-            status.textContent = 'Pi Network bağlantısı kuruluyor...';
+                <!-- EC Sensor -->
+                <div class="sensor-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">EC Değeri</h3>
+                        <span class="status-indicator status-online">Aktif</span>
+                    </div>
+                    <div class="sensor-value">1.2</div>
+                    <div class="sensor-label">İdeal Değer: 1.0 - 1.5</div>
+                </div>
 
-            try {
-                if (typeof window.Pi !== 'undefined') {
-                    await window.Pi.init({ 
-                        version: "2.0",
-                        sandbox: false,
-                        appId: '68a6fed62cb50254172b6593'
-                    });
-                    
-                    console.log('SDK Başlatıldı');
-                    
-                    const authResult = await window.Pi.authenticate(['payments', 'username'], {
-                        network: 'pi_mainnet',
-                        onIncompletePaymentFound: (payment) => {
-                            console.log('Tamamlanmamış ödeme:', payment);
-                            status.textContent = 'Tamamlanmamış ödeme bulundu: ' + payment.identifier;
-                        }
-                    });
+                <!-- Temperature Sensor -->
+                <div class="sensor-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Sıcaklık</h3>
+                        <span class="status-indicator status-online">Aktif</span>
+                    </div>
+                    <div class="sensor-value">24°C</div>
+                    <div class="sensor-label">İdeal Değer: 22-26°C</div>
+                </div>
 
-                    piUser = authResult.user;
-                    btn.style.display = 'none';
-                    document.getElementById('buyBtn').style.display = 'block';
-                    status.textContent = `Hoş geldin, ${piUser.username}!`;
-                    
-                    console.log('Pi kullanıcı:', piUser);
-                } else {
-                    throw new Error('Pi SDK bulunamadı!');
-                }
-            } catch (error) {
-                console.error('Pi bağlantı hatası:', error);
-                status.textContent = 'Hata: ' + error.message;
-                btn.disabled = false;
-                btn.textContent = 'Pi Network ile Bağlan';
-            }
-        }
+                <!-- Humidity Sensor -->
+                <div class="sensor-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Nem</h3>
+                        <span class="status-indicator status-online">Aktif</span>
+                    </div>
+                    <div class="sensor-value">65%</div>
+                    <div class="sensor-label">İdeal Değer: 60-70%</div>
+                </div>
 
-        async function buyProduct() {
-            if (!piUser) {
-                alert('Önce Pi Network ile bağlanın!');
-                return;
-            }
+                <!-- Light Sensor -->
+                <div class="sensor-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Işık Seviyesi</h3>
+                        <span class="status-indicator status-online">Aktif</span>
+                    </div>
+                    <div class="sensor-value">8000 lux</div>
+                    <div class="sensor-label">İdeal Değer: 6000-10000 lux</div>
+                </div>
 
-            const btn = document.getElementById('buyBtn');
-            const status = document.getElementById('status');
-            btn.disabled = true;
-            btn.textContent = 'Ödeme yapılıyor...';
-            status.textContent = 'Ödeme işleniyor...';
+                <!-- Water Level -->
+                <div class="sensor-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Su Seviyesi</h3>
+                        <span class="status-indicator status-online">Aktif</span>
+                    </div>
+                    <div class="sensor-value">85%</div>
+                    <div class="sensor-label">İdeal Değer: 80-90%</div>
+                </div>
+            </div>
+        </section>
 
-            try {
-                // Pi Ecosystem AI ile ödeme oluştur
-                const paymentData = {
-                    amount: 0.1,
-                    memo: "AgroPi ürün satın alma",
-                    metadata: { 
-                        userId: piUser.uid,
-                        username: piUser.username,
-                        product: "AgroPi Premium",
-                        apiKey: PI_API_KEY
-                    },
-                    payment: {
-                        to_address: "GDLROKVSDNERQXEOOOSLKFBZGFJZEM4WEY3V66E4UAT7UPHWF72XCKTL",
-                        amount: 0.1,
-                        memo: "AgroPi Marketplace - Premium Ürün"
-                    }
-                };
+        <!-- Payment Section -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-center mb-8 text-primary">Premium Özellikler</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <!-- Basic Plan -->
+                <div class="sensor-card text-center">
+                    <h3 class="text-xl font-bold mb-4">Temel</h3>
+                    <div class="text-3xl font-bold text-primary mb-4">0.1 π</div>
+                    <ul class="text-left mb-6 space-y-2">
+                        <li>✅ Sensör izleme</li>
+                        <li>✅ Temel analiz</li>
+                        <li>✅ 7 gün veri saklama</li>
+                    </ul>
+                    <button class="payment-button w-full" onclick="buyProduct(0.1, 'Temel')">
+                        Satın Al
+                    </button>
+                </div>
 
-                console.log('Ödeme verileri:', paymentData);
+                <!-- Pro Plan -->
+                <div class="sensor-card text-center border-2 border-primary">
+                    <div class="bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-full inline-block mb-4">
+                        EN POPÜLER
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Profesyonel</h3>
+                    <div class="text-3xl font-bold text-primary mb-4">0.5 π</div>
+                    <ul class="text-left mb-6 space-y-2">
+                        <li>✅ Tüm sensörler</li>
+                        <li>✅ AI analiz</li>
+                        <li>✅ 30 gün veri saklama</li>
+                        <li>✅ Mobil uygulama</li>
+                    </ul>
+                    <button class="payment-button w-full" onclick="buyProduct(0.5, 'Profesyonel')">
+                        Satın Al
+                    </button>
+                </div>
 
-                // Pi Network ödeme oluştur
-                const payment = await window.Pi.createPayment(paymentData);
+                <!-- Enterprise Plan -->
+                <div class="sensor-card text-center">
+                    <h3 class="text-xl font-bold mb-4">Kurumsal</h3>
+                    <div class="text-3xl font-bold text-primary mb-4">1.0 π</div>
+                    <ul class="text-left mb-6 space-y-2">
+                        <li>✅ Her şey dahil</li>
+                        <li>✅ Sınırsız veri</li>
+                        <li>✅ API erişimi</li>
+                        <li>✅ 7/24 destek</li>
+                    </ul>
+                    <button class="payment-button w-full" onclick="buyProduct(1.0, 'Kurumsal')">
+                        Satın Al
+                    </button>
+                </div>
+            </div>
+        </section>
 
-                console.log('Ödeme başarılı:', payment);
-                status.textContent = 'Ödeme başarılı! Teşekkürler.';
-                btn.textContent = 'Satın Alındı ✓';
-                btn.style.backgroundColor = '#28a745';
-                
-                // Ödeme bilgilerini backend'e gönder
-                await savePaymentToBackend(payment, piUser);
-                
-            } catch (error) {
-                console.error('Ödeme hatası:', error);
-                status.textContent = 'Ödeme hatası: ' + error.message;
-                btn.disabled = false;
-                btn.textContent = 'Satın Al (0.1 π)';
-            }
-        }
+        <!-- Status Display -->
+        <div id="statusMessage" class="hidden bg-card border border-border rounded-lg p-4 mb-6 text-center"></div>
+    </main>
 
-        async function savePaymentToBackend(payment, user) {
-            try {
-                // Ödeme bilgilerini backend'e gönder
-                const response = await fetch('https://api.pi.network/v2/payments', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${PI_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        payment_id: payment.identifier,
-                        user_id: user.uid,
-                        username: user.username,
-                        amount: 0.1,
-                        status: 'completed',
-                        timestamp: new Date().toISOString()
-                    })
-                });
+    <!-- Footer -->
+    <footer class="bg-card border-t border-border mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center text-muted-foreground">
+                <p>&copy; 2024 AgroPi Marketplace. Tüm hakları saklıdır.</p>
+                <p class="text-sm mt-2">AI destekli topraksız tarım çözümleri</p>
+            </div>
+        </div>
+    </footer>
 
-                if (response.ok) {
-                    console.log('Ödeme backend\'e kaydedildi');
-                } else {
-                    console.error('Backend kayıt hatası:', response.status);
-                }
-            } catch (error) {
-                console.error('Backend bağlantı hatası:', error);
-            }
-        }
-
-        // Sayfa yüklendiğinde Pi SDK kontrolü
-        window.addEventListener('load', () => {
-            if (typeof window.Pi === 'undefined') {
-                document.getElementById('status').textContent = 'Pi SDK yükleniyor...';
-                setTimeout(() => {
-                    if (typeof window.Pi === 'undefined') {
-                        document.getElementById('status').textContent = 'Pi SDK bulunamadı. Lütfen Pi Browser kullanın.';
-                    }
-                }, 3000);
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
