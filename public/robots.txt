@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://agropi-marketplace.vercel.app/sitemap.xml
+
+# Pi Network specific
+User-agent: *
+Allow: /api/
+Allow: /api/health
+
+# Block admin areas
+Disallow: /admin/
+Disallow: /dashboard/

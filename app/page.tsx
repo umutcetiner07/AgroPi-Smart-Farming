@@ -1,18 +1,74 @@
+import { Metadata } from 'next'
+import { getTranslation, getAlternateUrls, type Locale } from '@/lib/i18n'
+
+export async function generateMetadata({ params }: { params: { locale?: Locale } }): Promise<Metadata> {
+  const locale = params?.locale || 'tr'
+  const baseUrl = 'https://agropi-marketplace.vercel.app'
+  const path = locale === 'tr' ? '' : `/${locale}`
+  
+  const title = getTranslation(locale, 'site.title')
+  const description = getTranslation(locale, 'site.description')
+  const alternates = getAlternateUrls(locale === 'tr' ? '' : `/${locale}`)
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${baseUrl}${path}`,
+      languages: {
+        'tr': `${baseUrl}`,
+        'en': `${baseUrl}/en`,
+      },
+    },
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url: `${baseUrl}${path}`,
+      siteName: title,
+      images: [
+        {
+          url: `${baseUrl}/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&locale=${locale}`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        }
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [`${baseUrl}/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&locale=${locale}`],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+  }
+}
+
 'use client'
 
 import { useState, useEffect } from 'react'
+import { PiConfig, PiAuthResult } from '@/types/pi'
 
 // Pi Network Configuration
-const PI_CONFIG = {
-    appId: '68a6fed62cb50254172b6593',
-    apiKey: '5inedspkbqoa4bz4tljrimau6rl7yvwnwkeinebxrgy2jwtiryyuh3g15jxyqjqj',
-    walletAddress: 'GDLROKVSDNERQXEOOOSLKFBZGFJZEM4WEY3V66E4UAT7UPHWF72XCKTL',
+const PI_CONFIG: PiConfig = {
+    version: "2.0",
     sandbox: false,
-    network: 'pi_mainnet'
+    appId: '68a6fed62cb50254172b6593'
 }
 
 export default function Home() {
-    const [piUser, setPiUser] = useState<any>(null)
+    const [piUser, setPiUser] = useState<PiAuthResult['user'] | null>(null)
     const [isConnected, setIsConnected] = useState(false)
     const [statusMessage, setStatusMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
