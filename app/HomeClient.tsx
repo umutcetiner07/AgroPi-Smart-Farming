@@ -23,8 +23,8 @@ export default function HomeClient() {
 
     async function initializePi() {
         try {
-            if (typeof window !== 'undefined' && window.Pi) {
-                await window.Pi.init({
+            if (typeof window !== 'undefined' && (window as any).Pi) {
+                await (window as any).Pi.init({
                     version: "2.0",
                     sandbox: PI_CONFIG.sandbox,
                     appId: PI_CONFIG.appId
@@ -41,11 +41,11 @@ export default function HomeClient() {
     async function connectPi() {
         setIsLoading(true)
         try {
-            if (!window.Pi) {
+            if (!(window as any).Pi) {
                 throw new Error('Pi SDK bulunamadı!')
             }
 
-            const authResult = await window.Pi.authenticate(['payments', 'username'], {
+            const authResult = await (window as any).Pi.authenticate(['payments', 'username'], {
                 network: PI_CONFIG.network,
                 onIncompletePaymentFound: (payment: any) => {
                     console.log('Tamamlanmamış ödeme bulundu:', payment)

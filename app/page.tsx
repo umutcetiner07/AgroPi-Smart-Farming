@@ -2,8 +2,9 @@ import { Metadata } from 'next'
 import { getTranslation, getAlternateUrls, type Locale } from '@/lib/i18n'
 import HomeClient from './HomeClient'
 
-export async function generateMetadata({ params }: { params: { locale?: Locale } }): Promise<Metadata> {
-  const locale = params?.locale || 'tr'
+export async function generateMetadata({ params }: { params: Promise<{ locale?: Locale }> }): Promise<Metadata> {
+  const resolvedParams = await params
+  const locale = resolvedParams?.locale || 'tr'
   const baseUrl = 'https://agropi-marketplace.vercel.app'
   const path = locale === 'tr' ? '' : `/${locale}`
   

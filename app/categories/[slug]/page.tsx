@@ -5,9 +5,10 @@ import { DEFAULT_LOCALE, Locale, getAlternateUrls } from '@/lib/i18n'
 import { WebPageJsonLd } from '@/components/SeoJsonLd'
 
 // Step 6B: Locale-aware metadata
-export async function generateMetadata({ params }: { params: { slug: string; locale?: Locale } }): Promise<Metadata> {
-  const slug = params.slug
-  const localeToUse = (params.locale ?? DEFAULT_LOCALE) as Locale
+export async function generateMetadata({ params }: { params: Promise<{ slug: string; locale?: Locale }> }): Promise<Metadata> {
+  const resolvedParams = await params
+  const slug = resolvedParams.slug
+  const localeToUse = (resolvedParams.locale ?? DEFAULT_LOCALE) as Locale
   
   // Mock/real content fetch with locale fallback
   let category = await getCategoryBySlug(slug, localeToUse)
@@ -46,9 +47,10 @@ export async function generateMetadata({ params }: { params: { slug: string; loc
   }
 }
 
-export default async function CategoryPage({ params }: { params: { slug: string; locale?: Locale } }) {
-  const locale = params.locale || DEFAULT_LOCALE
-  const slug = params.slug
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string; locale?: Locale }> }) {
+  const resolvedParams = await params
+  const locale = resolvedParams.locale || DEFAULT_LOCALE
+  const slug = resolvedParams.slug
   const category = await getCategoryBySlug(slug, locale)
 
   if (!category) {
