@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   description: 'AgroPi — Pi Network üzerinden yapay zeka destekli tarımsal yönetim',
   metadataBase: new URL('https://agropicbecaed4844.pinet.com'),
   icons: {
-    icon: 'https://agropicbecaed4844.pinet.com/favicon.ico',
-    apple: 'https://agropicbecaed4844.pinet.com/apple-touch-icon.png',
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
   openGraph: {
     title: 'AgroPi Marketplace',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     siteName: 'AgroPi Marketplace',
     images: [
       {
-        url: 'https://agropicbecaed4844.pinet.com/og-image.png',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
       }
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'AgroPi Marketplace',
     description: 'AgroPi — Pi Network üzerinden yapay zeka destekli tarımsal yönetim',
-    images: ['https://agropicbecaed4844.pinet.com/og-image.png'],
+    images: ['/og-image.png'],
   },
   referrer: 'no-referrer-when-downgrade',
 }
