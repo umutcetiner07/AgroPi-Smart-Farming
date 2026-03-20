@@ -11,6 +11,7 @@ export interface PiConfig {
   version: string
   sandbox: boolean
   appId: string
+  network?: string
 }
 
 export interface PiCallbacks {
@@ -18,6 +19,7 @@ export interface PiCallbacks {
   onReadyForServerCompletion?: (paymentId: string, txid: string) => void
   onCancel?: (paymentId: string) => void
   onError?: (error: Error, payment?: PiPayment) => void
+  onIncompletePaymentFound?: (payment: any) => void
 }
 
 export interface PiAuthResult {
