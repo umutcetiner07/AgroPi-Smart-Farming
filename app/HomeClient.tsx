@@ -36,7 +36,10 @@ export default function HomeClient() {
                 // Pi Browser kontrolü
                 if (window.location.hostname.includes('pinet.com')) {
                     console.log('Pi Browser detected - enabling Pi Network features')
-                    setStatusMessage('Pi Browser modu aktif')
+                    setStatusMessage('Pi Browser modu aktif ✅')
+                } else {
+                    console.log('Normal browser modu')
+                    setStatusMessage('Pi SDK hazır')
                 }
             } else {
                 console.log('Pi SDK bulunamadı - normal browser modu')
