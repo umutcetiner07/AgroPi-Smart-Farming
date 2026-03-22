@@ -59,17 +59,20 @@ export default function HomeClient() {
                 throw new Error('Pi SDK bulunamadı!')
             }
 
-            const authResult = await (window as any).Pi.authenticate(['username'], {
+            console.log('Attempting Pi Network connection...')
+            
+            // Sadece username ve payments - geçerli scope'lar
+            const authResult = await (window as any).Pi.authenticate(['username', 'payments'], {
                 network: PI_CONFIG.sandbox ? 'testnet' : 'mainnet',
                 onIncompletePaymentFound: (payment: any) => {
                     console.log('Tamamlanmamış ödeme bulundu:', payment)
                 }
             })
 
+            console.log('Auth successful:', authResult)
             setPiUser(authResult.user)
             setIsConnected(true)
-            setStatusMessage('Pi Network ile başarıyla bağlantı kuruldu!')
-            console.log('Pi Network auth başarılı:', authResult)
+            setStatusMessage('Pi Network ile bağlantı kuruldu! ✅')
 
         } catch (error) {
             console.error('Pi Network bağlantı hatası:', error)
@@ -97,13 +100,6 @@ export default function HomeClient() {
             console.log('Starting payment test...')
             console.log('User:', piUser)
             console.log('Sandbox mode:', PI_CONFIG.sandbox)
-
-            // Önce payment izni iste
-            const paymentAuth = await (window as any).Pi.authenticate(['payments'], {
-                network: PI_CONFIG.sandbox ? 'testnet' : 'mainnet',
-            })
-
-            console.log('Payment auth result:', paymentAuth)
 
             const paymentResult = await (window as any).Pi.createPayment({
                 amount: 0.1,
