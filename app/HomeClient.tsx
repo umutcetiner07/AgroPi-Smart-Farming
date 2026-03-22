@@ -7,7 +7,7 @@ import AgroPiChatbot from '@/components/AgroPiChatbot'
 // Pi Network Configuration
 const PI_CONFIG: PiConfig = {
     version: "2.0",
-    sandbox: false,
+    sandbox: true, // Test için sandbox true olmalı
     appId: '68a6fed62cb50254172b6593'
 }
 
@@ -29,17 +29,17 @@ export default function HomeClient() {
                     version: "2.0",
                     sandbox: PI_CONFIG.sandbox,
                     appId: PI_CONFIG.appId,
-                    network: 'mainnet' // Pi Browser için mainnet
+                    network: PI_CONFIG.sandbox ? 'testnet' : 'mainnet' // Sandbox için testnet
                 })
-                console.log('Pi SDK başarıyla başlatıldı - Pi Browser modu')
+                console.log('Pi SDK başarıyla başlatıldı - Sandbox modu')
                 
-                // Pi Browser kontrolü
-                if (window.location.hostname.includes('pinet.com')) {
-                    console.log('Pi Browser detected - enabling Pi Network features')
-                    setStatusMessage('Pi Browser modu aktif ✅')
+                // Sandbox kontrolü
+                if (PI_CONFIG.sandbox) {
+                    console.log('Testnet mode active - Pi Browser test features enabled')
+                    setStatusMessage('Testnet modu aktif 🧪')
                 } else {
-                    console.log('Normal browser modu')
-                    setStatusMessage('Pi SDK hazır')
+                    console.log('Mainnet mode active')
+                    setStatusMessage('Mainnet modu aktif ✅')
                 }
             } else {
                 console.log('Pi SDK bulunamadı - normal browser modu')
@@ -60,7 +60,7 @@ export default function HomeClient() {
             }
 
             const authResult = await (window as any).Pi.authenticate(['payments', 'username'], {
-                network: PI_CONFIG.network,
+                network: PI_CONFIG.sandbox ? 'testnet' : 'mainnet',
                 onIncompletePaymentFound: (payment: any) => {
                     console.log('Tamamlanmamış ödeme bulundu:', payment)
                 }
