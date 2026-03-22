@@ -1,15 +1,11 @@
 {
-  "version": 2,
-  "builds": [
+  "headers": [
     {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/validation-key",
-      "dest": "/api/validation-key"
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors *;" },
+        { "key": "X-Frame-Options", "value": "ALLOWALL" }
+      ]
     }
   ]
 }
