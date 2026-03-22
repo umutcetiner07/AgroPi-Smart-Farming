@@ -1,31 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+
+const PI_APPROVE = (paymentId: string) =>
+  `https://api.minepi.com/v2/payments/${paymentId}/approve`;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { paymentId, txid } = body;
+    const paymentId = body?.paymentId as string | undefined;
+    if (!paymentId) {
+      return NextResponse.json(
+        { error: "paymentId is required" },
+        { status: 400 }
+      );
+    }
 
-    console.log('Payment approval request:', { paymentId, txid });
+    const secret = process.env.PI_APP_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        {
+          error:
+            "PI_APP_SECRET is not set. Add your Pi Developer Portal app secret to .env.local for server-side approval.",
+        },
+        { status: 503 }
+      );
+    }
 
-    // Test için otomatik onay
-    // Gerçek uygulamada burada güvenlik kontrolleri yapılmalı
-    const approvalData = {
-      paymentId,
-      txid,
-      approved: true,
-      timestamp: new Date().toISOString()
-    };
+    const res = await fetch(PI_APPROVE(paymentId), {
+      method: "POST",
+      headers: { Authorization: `Key ${secret}` },
+    });
 
-    // Pi Network'e approval bildirimi
-    // Not: Gerçek uygulamada Pi'nin approve endpoint'i çağrılmalı
-    console.log('Payment approved:', approvalData);
-
-    return NextResponse.json(approvalData);
-
+    const text = await res.text();
+    return new NextResponse(text, {
+      status: res.status,
+      headers: { "Content-Type": res.headers.get("Content-Type") ?? "application/json" },
+    });
   } catch (error) {
-    console.error('Payment approval error:', error);
+    console.error("Payment approval error:", error);
     return NextResponse.json(
-      { error: 'Payment approval failed' },
+      { error: "Payment approval failed" },
       { status: 500 }
     );
   }

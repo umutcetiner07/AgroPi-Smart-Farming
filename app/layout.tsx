@@ -45,10 +45,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr">
-      <body className={inter.className}>
-        <script src="https://sdk.minepi.com/pi-sdk.js" />
-        {children}
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   )
 }

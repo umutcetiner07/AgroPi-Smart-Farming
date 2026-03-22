@@ -1,29 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+
+const PI_COMPLETE = (paymentId: string) =>
+  `https://api.minepi.com/v2/payments/${paymentId}/complete`;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { paymentId, txid } = body;
+    const paymentId = body?.paymentId as string | undefined;
+    const txid = body?.txid as string | undefined;
+    if (!paymentId || !txid) {
+      return NextResponse.json(
+        { error: "paymentId and txid are required" },
+        { status: 400 }
+      );
+    }
 
-    console.log('Payment completion request:', { paymentId, txid });
+    const secret = process.env.PI_APP_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        {
+          error:
+            "PI_APP_SECRET is not set. Add your Pi Developer Portal app secret to .env.local for server-side completion.",
+        },
+        { status: 503 }
+      );
+    }
 
-    // Test için otomatik tamamlama
-    const completionData = {
-      paymentId,
-      txid,
-      completed: true,
-      timestamp: new Date().toISOString()
-    };
+    const res = await fetch(PI_COMPLETE(paymentId), {
+      method: "POST",
+      headers: {
+        Authorization: `Key ${secret}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ txid }),
+    });
 
-    // Pi Network'e completion bildirimi
-    console.log('Payment completed:', completionData);
-
-    return NextResponse.json(completionData);
-
+    const text = await res.text();
+    return new NextResponse(text, {
+      status: res.status,
+      headers: { "Content-Type": res.headers.get("Content-Type") ?? "application/json" },
+    });
   } catch (error) {
-    console.error('Payment completion error:', error);
+    console.error("Payment completion error:", error);
     return NextResponse.json(
-      { error: 'Payment completion failed' },
+      { error: "Payment completion failed" },
       { status: 500 }
     );
   }

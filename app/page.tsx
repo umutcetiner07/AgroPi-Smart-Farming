@@ -1,23 +1,20 @@
 "use client";
-import { useEffect } from "react";
 import Script from 'next/script';
 
 export default function Page() {
-  useEffect(() => {
-    const initPi = async () => {
-      if (window.Pi) {
-        await window.Pi.init({ version: '2.0', sandbox: true });
-      }
-    };
-    initPi();
-  }, []);
-
   const startPayment = async () => {
+    if (!window.Pi) {
+      alert("Pi SDK yuklenemedi, sayfayi yenile!");
+      return;
+    }
     try {
-      const payment = await window.Pi.createPayment({
+      // Zorla yeniden init yapıyoruz hata almamak için
+      await window.Pi.init({ version: '2.0', sandbox: true });
+      
+      await window.Pi.createPayment({
         amount: 0.1,
-        memo: "AgroPi Final Test",
-        metadata: { orderId: "final-10" }
+        memo: "AgroPi Final 10/10",
+        metadata: { orderId: "final-step" }
       }, {
         onReadyForServerApproval: (paymentId) => {
           return fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
@@ -33,20 +30,20 @@ export default function Page() {
           });
         },
         onCancel: (paymentId) => console.log("Iptal"),
-        onError: (error, payment) => alert("Hata: " + error.message)
+        onError: (error) => alert("Hata: " + error.message)
       });
-    } catch (e) { alert(e); }
+    } catch (e) { alert("Hata: " + e); }
   };
 
   return (
     <div style={{ backgroundColor: 'black', color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-      <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="afterInteractive" />
-      <h1 style={{ marginBottom: '20px' }}>AgroPi 10. Madde Onay Sayfası</h1>
+      <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="beforeInteractive" />
+      <h1>AgroPi 10. Madde Onay</h1>
       <button 
         onClick={startPayment}
         style={{ backgroundColor: '#4CAF50', color: 'white', padding: '20px 40px', fontSize: '20px', borderRadius: '10px', border: 'none', cursor: 'pointer' }}
       >
-        PI ILE ODEME YAP (0.1 PI)
+        ODEMEYI YAP VE BITIR (0.1 PI)
       </button>
     </div>
   );

@@ -2,7 +2,10 @@ export interface PiWindow extends Window {
   Pi: {
     init: (config: PiConfig) => Promise<void>
     authenticate: (scopes: string[], callbacks?: PiCallbacks) => Promise<PiAuthResult>
-    createPayment: (payment: PiPayment) => Promise<PiPaymentResult>
+    createPayment: (
+      payment: PiPayment,
+      callbacks?: PiCallbacks
+    ) => Promise<PiPaymentResult>
     openShareDialog: (data: PiShareData) => Promise<void>
   }
 }

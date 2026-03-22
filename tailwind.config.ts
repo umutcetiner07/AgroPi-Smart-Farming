@@ -9,6 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        agropi: {
+          forest: "#004d2c",
+          "forest-deep": "#064e3b",
+          "forest-950": "#022c1f",
+          mist: "#f9faf7",
+          "mist-alt": "#f8faf9",
+          gold: "#d4a012",
+          amber: "#fbbf24",
+          wheat: "#8b6b1d",
+          optimal: "#bbf7d0",
+          "optimal-fg": "#14532d",
+          sandbox: "#ffb800",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -47,6 +60,7 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "3xl": "1.5rem",
       },
     },
   },
