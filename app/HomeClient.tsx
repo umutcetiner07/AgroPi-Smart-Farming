@@ -106,13 +106,63 @@ export default function HomeClient() {
                     userId: piUser?.uid || 'anonymous'
                 }
             }, {
-                onReadyForServerApproval: (paymentId: string) => {
+                onReadyForServerApproval: async (paymentId: string) => {
                     console.log('Payment ready for approval:', paymentId)
-                    setStatusMessage('Ödeme onayı bekleniyor...')
+                    setStatusMessage('Ödeme onaylanıyor...')
+                    
+                    // Backend'e onay isteği gönder
+                    try {
+                        const response = await fetch('/api/pi/approve-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${piUser?.accessToken || ''}`
+                            },
+                            body: JSON.stringify({
+                                paymentId,
+                                txid: paymentId // Test için aynı
+                            })
+                        })
+                        
+                        const result = await response.json()
+                        console.log('Approval result:', result)
+                        
+                        if (result.approved) {
+                            setStatusMessage('Ödeme onaylandı! ✅')
+                        }
+                    } catch (error) {
+                        console.error('Approval error:', error)
+                        setStatusMessage('Onay hatası: ' + error.message)
+                    }
                 },
-                onReadyForServerCompletion: (paymentId: string, txid: string) => {
+                onReadyForServerCompletion: async (paymentId: string, txid: string) => {
                     console.log('Payment ready for completion:', paymentId, txid)
                     setStatusMessage('Ödeme tamamlanıyor...')
+                    
+                    // Backend'e tamamlama isteği gönder
+                    try {
+                        const response = await fetch('/api/pi/complete-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${piUser?.accessToken || ''}`
+                            },
+                            body: JSON.stringify({
+                                paymentId,
+                                txid
+                            })
+                        })
+                        
+                        const result = await response.json()
+                        console.log('Completion result:', result)
+                        
+                        if (result.completed) {
+                            setStatusMessage('Ödeme başarıyla tamamlandı! ✅')
+                        }
+                    } catch (error) {
+                        console.error('Completion error:', error)
+                        setStatusMessage('Tamamlama hatası: ' + error.message)
+                    }
                 },
                 onCancel: (paymentId: string) => {
                     console.log('Payment cancelled:', paymentId)
