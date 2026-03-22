@@ -59,7 +59,7 @@ export default function HomeClient() {
                 throw new Error('Pi SDK bulunamadı!')
             }
 
-            const authResult = await (window as any).Pi.authenticate(['payments', 'username'], {
+            const authResult = await (window as any).Pi.authenticate(['payments', 'username', 'wallet'], {
                 network: PI_CONFIG.sandbox ? 'testnet' : 'mainnet',
                 onIncompletePaymentFound: (payment: any) => {
                     console.log('Tamamlanmamış ödeme bulundu:', payment)
@@ -93,6 +93,10 @@ export default function HomeClient() {
             if (!(window as any).Pi) {
                 throw new Error('Pi SDK bulunamadı!')
             }
+
+            console.log('Starting payment test...')
+            console.log('User:', piUser)
+            console.log('Sandbox mode:', PI_CONFIG.sandbox)
 
             const paymentResult = await (window as any).Pi.createPayment({
                 amount: 0.1,
