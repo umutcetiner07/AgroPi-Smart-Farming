@@ -5,7 +5,7 @@ import HomeClient from './HomeClient'
 export async function generateMetadata({ params }: { params: Promise<{ locale?: Locale }> }): Promise<Metadata> {
   const resolvedParams = await params
   const locale = resolvedParams?.locale || 'tr'
-  const baseUrl = 'https://agropi-marketplace.vercel.app'
+  const baseUrl = 'https://agropi-smart-farming.vercel.app'
   const path = locale === 'tr' ? '' : `/${locale}`
   
   const title = getTranslation(locale, 'site.title')

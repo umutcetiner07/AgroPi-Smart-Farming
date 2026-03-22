@@ -96,7 +96,7 @@ export default function HomeClient() {
                             <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                                 <span className="text-white font-bold">π</span>
                             </div>
-                            <h1 className="text-2xl font-bold text-gray-900">AgroPi Marketplace</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">AgroPi Smart Farming</h1>
                         </div>
                         
                         {/* Pi Network Connection */}
@@ -105,13 +105,13 @@ export default function HomeClient() {
                                 <div className="flex items-center space-x-2">
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                     <span className="text-sm text-gray-600">
-                                        {piUser?.username || 'Kullanıcı'}
+                                        {piUser?.username || 'User'}
                                     </span>
                                     <button
                                         onClick={disconnectPi}
                                         className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                                     >
-                                        Çıkış
+                                        Logout
                                     </button>
                                 </div>
                             ) : (
@@ -120,7 +120,7 @@ export default function HomeClient() {
                                     disabled={isLoading}
                                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
                                 >
-                                    {isLoading ? 'Bağlanıyor...' : 'Pi Network ile Bağlan'}
+                                    {isLoading ? 'Connecting...' : 'Connect with Pi'}
                                 </button>
                             )}
                         </div>
@@ -132,18 +132,18 @@ export default function HomeClient() {
             <section className="py-16 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto text-center">
                     <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-                        Pi Network ile
-                        <span className="text-green-600"> Akıllı Tarım</span>
+                        Smart Farming with
+                        <span className="text-green-600"> Pi Network</span>
                     </h2>
                     <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                        Pi Network tabanlı ödeme sistemi ile tarım ürünleri alım satım platformu. 
-                        Güvenli, hızlı ve decentralize ticaret deneyimi.
+                        Pi Network-based payment system for agricultural products trading platform. 
+                        Secure, fast and decentralized trading experience.
                     </p>
                     
                     {!isConnected && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
                             <p className="text-yellow-800 text-sm">
-                                Pi Network ile bağlanarak marketplace özelliklerini kullanabilirsiniz.
+                                You can use marketplace features by connecting with Pi Network.
                             </p>
                         </div>
                     )}
