@@ -1,7 +1,10 @@
 export interface PiWindow extends Window {
   Pi: {
     init: (config: PiConfig) => Promise<void>
-    authenticate: (scopes: string[], callbacks?: PiCallbacks) => Promise<PiAuthResult>
+    authenticate: (
+      scopes: string[],
+      onIncompletePaymentFound?: (payment: IncompletePaymentDTO) => void
+    ) => Promise<PiAuthResult>
     createPayment: (
       payment: PiPayment,
       callbacks?: PiCallbacks
@@ -22,7 +25,7 @@ export interface PiCallbacks {
   onReadyForServerCompletion?: (paymentId: string, txid: string) => void
   onCancel?: (paymentId: string) => void
   onError?: (error: Error, payment?: PiPayment) => void
-  onIncompletePaymentFound?: (payment: any) => void
+  onIncompletePaymentFound?: (payment: IncompletePaymentDTO) => void
 }
 
 export interface PiAuthResult {
@@ -31,6 +34,10 @@ export interface PiAuthResult {
     username: string
   }
   accessToken: string
+  // SDK bazı sürümlerde verilen/granted scope listesini döndürebilir.
+  // Runtime'da kontrol edeceğiz; yoksa undefined kalır.
+  scopes?: string[]
+  grantedScopes?: string[]
 }
 
 export interface PiPayment {
@@ -49,6 +56,15 @@ export interface PiShareData {
   title: string
   description?: string
   media?: string[]
+}
+
+// Pi SDK `authenticate(..., onIncompletePaymentFound)` callback'ine verdiği DTO.
+// Dokümana göre resume için "identifier" ve "transaction" alanları kullanılır.
+export interface IncompletePaymentDTO {
+  identifier: string
+  transaction: {
+    txid: string
+  }
 }
 
 declare global {

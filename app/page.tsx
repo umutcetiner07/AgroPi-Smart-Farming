@@ -1,50 +1,301 @@
 "use client";
-import Script from 'next/script';
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Script from "next/script";
+import {
+  Bell,
+  ChevronDown,
+  CloudSun,
+  Droplets,
+  FlaskConical,
+  Leaf,
+  RefreshCw,
+  Shield,
+  Sun,
+  Thermometer,
+  Waves,
+  Wind,
+} from "lucide-react";
+import { BottomNav } from "@/components/dashboard/BottomNav";
+import { HealthScoreRing } from "@/components/dashboard/HealthScoreRing";
+import { PiSandboxPayment } from "@/components/dashboard/PiSandboxPayment";
+import { SensorReadingCard } from "@/components/dashboard/SensorReadingCard";
+import type { IncompletePaymentDTO } from "@/types/pi";
+
+const PI_APP_ID = process.env.NEXT_PUBLIC_PI_APP_ID ?? "";
+const PI_SANDBOX =
+  (process.env.NEXT_PUBLIC_PI_SANDBOX ?? "true").toLowerCase() === "true";
 
 export default function Page() {
-  const startPayment = async () => {
-    if (!window.Pi) {
-      alert("Pi SDK yuklenemedi, sayfayi yenile!");
+  const [paymentBusy, setPaymentBusy] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [now, setNow] = useState(() => new Date());
+  const [paymentsScopeStatus, setPaymentsScopeStatus] = useState<
+    "unknown" | "granted" | "denied"
+  >("unknown");
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const initPi = async () => {
+      if (typeof window === "undefined" || !window.Pi) return;
+      if (!PI_APP_ID) {
+        console.warn(
+          "NEXT_PUBLIC_PI_APP_ID eksik; Pi.init atlandı. .env.local kontrol edin."
+        );
+        return;
+      }
+      await window.Pi.init({
+        version: "2.0",
+        sandbox: PI_SANDBOX,
+        appId: PI_APP_ID,
+      });
+    };
+    initPi();
+  }, []);
+
+  const timeLabel = useMemo(
+    () =>
+      now.toLocaleTimeString("tr-TR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
+    [now]
+  );
+
+  const resumeIncompletePayment = useCallback(
+    async (paymentDTO: IncompletePaymentDTO) => {
+      const paymentId = paymentDTO.identifier;
+      const txid = paymentDTO.transaction.txid;
+
+      try {
+        if (!paymentId || !txid) {
+          throw new Error(
+            "IncompletePaymentDTO beklenen alanları içermiyor (identifier / transaction.txid)."
+          );
+        }
+        setPaymentStatus("Tamamlanmamış ödeme bulundu. Sunucu tamamlıyor…");
+        const res = await fetch("/api/pi/complete-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentId, txid }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(
+            (err as { error?: string }).error ??
+              "Tamamlanmamış ödeme tamamlama başarısız"
+          );
+        }
+        setPaymentStatus("Tamamlanmamış ödeme başarıyla işlendi.");
+      } catch (e) {
+        setPaymentStatus(
+          e instanceof Error
+            ? e.message
+            : "Tamamlanmamış ödeme işlenemedi."
+        );
+        console.error("[Pi] resumeIncompletePayment error:", e);
+      }
+    },
+    []
+  );
+
+  const ensurePiAuthenticated = useCallback(async () => {
+    if (typeof window === "undefined" || !window.Pi?.authenticate) return;
+    if (!PI_APP_ID) throw new Error("PI_APP_ID eksik.");
+
+    try {
+      // KRITIK DÜZELTME: ["payments", "username"] izni burada zorunlu.
+      const authResult = await window.Pi.authenticate(
+        ["payments", "username"],
+        resumeIncompletePayment
+      );
+
+      // SDK sürüm farklarına göre scope kontrolü
+      const grantedScopes =
+        (authResult as any)?.scopes ?? (authResult as any)?.grantedScopes;
+      
+      if (Array.isArray(grantedScopes) && grantedScopes.includes("payments")) {
+        setPaymentsScopeStatus("granted");
+        return "granted";
+      } else {
+        // İzin verilmediyse kullanıcıyı uyaralım
+        setPaymentsScopeStatus("denied");
+        return "denied";
+      }
+    } catch (err) {
+      console.error("Auth hatası:", err);
+      setPaymentsScopeStatus("denied");
+      return "denied";
+    }
+  }, [PI_APP_ID, resumeIncompletePayment]);
+
+  const startPayment = useCallback(async () => {
+    if (typeof window === "undefined" || !window.Pi?.createPayment) {
+      alert("Pi SDK yüklenemedi. Pi Browser içinde deneyin.");
       return;
     }
+    if (paymentBusy) return;
+
+    setPaymentBusy(true);
+    setPaymentStatus("Pi izinlerini kontrol ediyor…");
+
     try {
-      // Zorla yeniden init yapıyoruz hata almamak için
-      await window.Pi.init({ version: '2.0', sandbox: true });
+      const authStatus = await ensurePiAuthenticated();
       
-      await window.Pi.createPayment({
-        amount: 0.1,
-        memo: "AgroPi Final 10/10",
-        metadata: { orderId: "final-step" }
-      }, {
-        onReadyForServerApproval: (paymentId) => {
-          return fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
-            method: 'POST',
-            headers: { 'Authorization': 'Key ipqhskxaso0wqujzgwgsxrcpfwcjkk1kmgq1xvbptqh6lqpuq1xebsnjzz7v6gud' }
-          });
-        },
-        onReadyForServerCompletion: (paymentId, txid) => {
-          return fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
-            method: 'POST',
-            headers: { 'Authorization': 'Key ipqhskxaso0wqujzgwgsxrcpfwcjkk1kmgq1xvbptqh6lqpuq1xebsnjzz7v6gud' },
-            body: JSON.stringify({ txid })
-          });
-        },
-        onCancel: (paymentId) => console.log("Iptal"),
-        onError: (error) => alert("Hata: " + error.message)
+      if (authStatus === "denied") {
+        setPaymentBusy(false);
+        setPaymentStatus(
+          "Ödeme yapmak için gerekli izinleri vermediniz. Lütfen uygulamayı yeniden başlatıp izinleri kabul edin."
+        );
+        return;
+      }
+
+      setPaymentStatus("Ödeme akışı başlatılıyor…");
+
+      const orderRes = await fetch("/api/pi/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: 0.1,
+          memo: "AgroPi Test Payment — Field Sensor Access",
+          intent: "test",
+        }),
       });
-    } catch (e) { alert("Hata: " + e); }
-  };
+      
+      if (!orderRes.ok) {
+        const err = await orderRes.json().catch(() => ({}));
+        throw new Error(
+          (err as { error?: string }).error ??
+            "orderId üretimi başarısız. Ödeme başlatılamadı."
+        );
+      }
+      
+      const { orderId } = (await orderRes.json()) as { orderId: string };
+
+      await window.Pi.createPayment(
+        {
+          amount: 0.1,
+          memo: "AgroPi Test Payment — Field Sensor Access",
+          metadata: { orderId },
+        },
+        {
+          onReadyForServerApproval: async (paymentId) => {
+            setPaymentStatus("Sunucu onayı bekleniyor…");
+            const res = await fetch("/api/pi/approve-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentId, orderId }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(
+                (err as { error?: string }).error ?? "Onay isteği başarısız"
+              );
+            }
+          },
+          onReadyForServerCompletion: async (paymentId, txid) => {
+            setPaymentStatus("Blok zinciri onaylandı, sunucu tamamlıyor…");
+            const res = await fetch("/api/pi/complete-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentId, txid }),
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(
+                (err as { error?: string }).error ??
+                  "Tamamlama isteği başarısız"
+              );
+            }
+            setPaymentStatus("Ödeme başarıyla tamamlandı.");
+            setPaymentBusy(false);
+          },
+          onCancel: () => {
+            setPaymentStatus("Ödeme iptal edildi. Dashboard hazır.");
+            setPaymentBusy(false);
+          },
+          onError: (error) => {
+            setPaymentStatus(
+              error?.message ? `Ödeme hatası: ${error.message}` : "Ödeme hatası"
+            );
+            setPaymentBusy(false);
+          },
+        }
+      );
+    } catch (e) {
+      setPaymentBusy(false);
+      setPaymentStatus(e instanceof Error ? e.message : String(e));
+    }
+  }, [PI_APP_ID, ensurePiAuthenticated, paymentBusy]);
 
   return (
-    <div style={{ backgroundColor: 'black', color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-      <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="beforeInteractive" />
-      <h1>AgroPi 10. Madde Onay</h1>
-      <button 
-        onClick={startPayment}
-        style={{ backgroundColor: '#4CAF50', color: 'white', padding: '20px 40px', fontSize: '20px', borderRadius: '10px', border: 'none', cursor: 'pointer' }}
-      >
-        ODEMEYI YAP VE BITIR (0.1 PI)
-      </button>
-    </div>
-  );
-}
+    <div className="min-h-screen bg-agropi-mist pb-36 text-neutral-900">
+      <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="afterInteractive" />
+
+      <header className="relative overflow-hidden bg-agropi-forest-deep px-4 pb-10 pt-6 text-white">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.35]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)
+            `,
+            backgroundSize: "28px 28px",
+          }}
+          aria-hidden
+        />
+        <div className="relative mx-auto flex max-w-lg items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">AgroPi</p>
+            <h1 className="text-2xl font-bold tracking-tight">Smart Farming</h1>
+          </div>
+          <div className="flex gap-2">
+            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur"><RefreshCw className="h-5 w-5" /></button>
+            <button className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur">
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-agropi-amber ring-2 ring-agropi-forest-deep" />
+            </button>
+          </div>
+        </div>
+
+        <button className="relative mx-auto mt-6 flex w-full max-w-lg items-center gap-3 rounded-full bg-black/25 px-4 py-3 text-left backdrop-blur-md transition hover:bg-black/30">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-agropi-amber text-sm font-bold text-neutral-900">A</span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">Field A — North <span className="text-agropi-amber">Tomatoes</span></p>
+          </div>
+          <ChevronDown className="h-5 w-5 shrink-0 text-white/80" />
+        </button>
+      </header>
+
+      <main className="relative z-10 mx-auto max-w-lg -mt-6 space-y-4 px-4">
+        <section className="rounded-3xl bg-white p-4 shadow-md ring-1 ring-black/5">
+          <div className="grid grid-cols-3 gap-2 divide-x divide-neutral-100">
+            <div className="pr-2 text-center">
+              <CloudSun className="mx-auto mb-1 h-7 w-7 text-sky-500" />
+              <p className="text-xs text-neutral-500">Partly Cloudy</p>
+              <p className="text-lg font-bold text-agropi-forest">24°C</p>
+            </div>
+            <div className="px-2 text-center">
+              <Droplets className="mx-auto mb-1 h-7 w-7 text-sky-600" />
+              <p className="text-xs text-neutral-500">Humidity</p>
+              <p className="text-lg font-bold text-agropi-forest">68%</p>
+            </div>
+            <div className="pl-2 text-center">
+              <Wind className="mx-auto mb-1 h-7 w-7 text-neutral-400" />
+              <p className="text-xs text-neutral-500">Wind</p>
+              <p className="text-lg font-bold text-agropi-forest">8 km/h</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="relative overflow-hidden rounded-3xl bg-agropi-forest p-5 text-white shadow-md ring-1 ring-black/10">
+          <div className="relative flex items-center gap-5">
+            <HealthScoreRing score={92} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-200/90">Crop Health Score</p>
+              <p className="mt-

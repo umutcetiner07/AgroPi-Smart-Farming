@@ -5,6 +5,7 @@ import { Zap } from "lucide-react";
 type PiSandboxPaymentProps = {
   onPay: () => void;
   busy?: boolean;
+  disabled?: boolean;
 };
 
 function PiMark({ className }: { className?: string }) {
@@ -27,7 +28,11 @@ function PiMark({ className }: { className?: string }) {
   );
 }
 
-export function PiSandboxPayment({ onPay, busy }: PiSandboxPaymentProps) {
+export function PiSandboxPayment({
+  onPay,
+  busy,
+  disabled,
+}: PiSandboxPaymentProps) {
   return (
     <section
       className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-sm"
@@ -85,8 +90,8 @@ export function PiSandboxPayment({ onPay, busy }: PiSandboxPaymentProps) {
         <button
           type="button"
           onClick={onPay}
-          disabled={busy}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-agropi-forest py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-95 disabled:opacity-60"
+          disabled={busy || disabled}
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-green-600 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-agropi-gold/20 text-agropi-gold">
             <PiMark className="text-sm" />
