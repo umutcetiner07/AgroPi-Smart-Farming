@@ -1,164 +1,75 @@
-// AgroPi Marketplace — Pi SDK Köprüsü
-// AgroPi-v2 reposundaki Pi.authenticate() ve Pi.createPayment() akışlarını
-// React Native ortamına uyarlayan servis katmanı.
-//
-// Referans: github.com/umutcetiner07/AgroPi-v2
-// - Sandbox / production ortam seçimi
-// - Pi Browser dışında mock mod (geliştirme kolaylığı)
+// AgroPi — Pi SDK Köprüsü (Next.js / Web)
+// Pi Browser'da window.Pi inject edilir; dışarıda mock mod devreye girer.
 
-import { Platform } from 'react-native';
-import PiSabitleri from './PiSabitleri';
+const SANDBOX = process.env.NEXT_PUBLIC_PI_ENV !== 'production';
+const APP_ID  = process.env.NEXT_PUBLIC_PI_APP_ID || '68a6fed62cb50254172b6593';
 
-// ─────────────────────────────────────────
-// Mock Pi SDK (Pi Browser dışı geliştirme)
-// AgroPi-v2'deki localhost mock mantığının React Native karşılığı
-// ─────────────────────────────────────────
 const MockPiSDK = {
-    // Sahte kullanıcı verisi döner
-    authenticate: (izinler, onSuccess, onError) => {
-        console.log('[AgroPi Mock SDK] authenticate() çağrıldı');
-        setTimeout(() => {
-            onSuccess({
-                accessToken: 'mock_token_agropi_dev_12345',
-                user: {
-                    uid: 'mock_uid_001',
-                    username: 'agropi_test_kullanici',
-                },
-            });
-        }, 1200);
-    },
-
-    // Sahte ödeme akışı
-    createPayment: (odemeVerisi, geriCagrimlar) => {
-        console.log('[AgroPi Mock SDK] createPayment() çağrıldı:', odemeVerisi);
-        setTimeout(() => {
-            geriCagrimlar.onReadyForServerApproval('mock_odeme_id_001');
-        }, 800);
-        setTimeout(() => {
-            geriCagrimlar.onReadyForServerCompletion('mock_odeme_id_001', 'mock_txid_001');
-        }, 2000);
-    },
-
-    openShareDialog: (baslik, aciklama, url) => {
-        console.log('[AgroPi Mock SDK] openShareDialog():', baslik);
-    },
+  authenticate: (_scopes, onSuccess, _onError) => {
+    setTimeout(() => onSuccess({
+      accessToken: 'mock_token_agropi_dev_12345',
+      user: { uid: 'mock_uid_001', username: 'agropi_test_kullanici' },
+    }), 1200);
+  },
+  createPayment: (data, callbacks) => {
+    setTimeout(() => callbacks.onReadyForServerApproval('mock_odeme_id_001'), 800);
+    setTimeout(() => callbacks.onReadyForServerCompletion('mock_odeme_id_001', 'mock_txid_001'), 2000);
+  },
+  openShareDialog: (title, _desc, _url) => {
+    console.log('[AgroPi MockSDK] openShareDialog:', title);
+  },
 };
 
-// ─────────────────────────────────────────
-// Pi Browser tespiti
-// AgroPi-v2'deki navigatör kontrolünün React Native versiyonu
-// ─────────────────────────────────────────
-export const piBrowserMi = () => {
-    // React Native'de global Pi nesnesi Pi Browser'da inject edilir
-    return typeof global.Pi !== 'undefined';
-};
+export const piBrowserMi = () =>
+  typeof window !== 'undefined' && typeof window.Pi !== 'undefined';
 
-// Aktif SDK'yı al (gerçek veya mock)
 export const piSDKAl = () => {
-    if (piBrowserMi()) {
-        return global.Pi;
-    }
-    console.warn('[AgroPi] Pi Browser tespit edilemedi → Mock mod aktif');
-    return MockPiSDK;
+  if (piBrowserMi()) return window.Pi;
+  console.warn('[AgroPi] Pi Browser dışı → Mock mod');
+  return MockPiSDK;
 };
 
-// ─────────────────────────────────────────
-// Pi ile Giriş Yap
-// AgroPi-v2: Pi.authenticate(scopes, onSuccess, onError)
-// ─────────────────────────────────────────
-export const piGirisYap = () => {
-    return new Promise((resolve, reject) => {
-        const sdk = piSDKAl();
-
-        const basarili = (auth) => {
-            console.log('[AgroPi] Pi girişi başarılı:', auth.user.username);
-            resolve({
-                kullaniciAdi: auth.user.username,
-                kullaniciId: auth.user.uid,
-                erisimToken: auth.accessToken,
-                mockMod: !piBrowserMi(),
-            });
-        };
-
-        const basarisiz = (hata) => {
-            console.error('[AgroPi] Pi giriş hatası:', hata);
-            reject(new Error('Pi girişi başarısız: ' + (hata?.message || 'Bilinmeyen hata')));
-        };
-
-        try {
-            sdk.authenticate(PiSabitleri.IZINLER, basarili, basarisiz);
-        } catch (hata) {
-            reject(hata);
-        }
-    });
+export const piSDKBaslat = () => {
+  if (!piBrowserMi()) return;
+  try {
+    window.Pi.init({ version: '2.0', sandbox: SANDBOX });
+  } catch (e) {
+    console.warn('[AgroPi] Pi SDK init hatası:', e.message);
+  }
 };
 
-// ─────────────────────────────────────────
-// Pi ile Ödeme Başlat
-// AgroPi-v2: Pi.createPayment(paymentData, callbacks)
-// ─────────────────────────────────────────
-export const odemeBaslat = ({
-    miktar,
-    aciklama,
-    aliciKullaniciId,
-    uygMetaVeri = {},
-}) => {
-    return new Promise((resolve, reject) => {
-        const sdk = piSDKAl();
+export const piGirisYap = () =>
+  new Promise((resolve, reject) => {
+    const sdk = piSDKAl();
+    sdk.authenticate(
+      ['username', 'payments', 'wallet_address'],
+      (auth) => resolve({
+        kullaniciAdi: auth.user.username,
+        kullaniciId:  auth.user.uid,
+        erisimToken:  auth.accessToken,
+        mockMod:      !piBrowserMi(),
+      }),
+      (hata) => reject(new Error('Pi girişi başarısız: ' + (hata?.message ?? 'Bilinmeyen hata'))),
+    );
+  });
 
-        // Ödeme verisi (AgroPi-v2 formatıyla uyumlu)
-        const odemeVerisi = {
-            amount: miktar,
-            memo: aciklama,
-            metadata: {
-                alici: aliciKullaniciId,
-                platform: 'AgroPi-Marketplace',
-                ortam: PiSabitleri.ORTAM,
-                ...uygMetaVeri,
-            },
-        };
+export const odemeBaslat = ({ miktar, aciklama, aliciKullaniciId = '', uygMetaVeri = {} }) =>
+  new Promise((resolve, reject) => {
+    const sdk = piSDKAl();
+    sdk.createPayment(
+      {
+        amount:   miktar,
+        memo:     aciklama,
+        metadata: { alici: aliciKullaniciId, platform: 'AgroPi', ...uygMetaVeri },
+      },
+      {
+        onReadyForServerApproval:   (id)       => resolve({ durum: 'onay_bekleniyor', odemeId: id }),
+        onReadyForServerCompletion: (id, txid) => resolve({ durum: 'tamamlandi', odemeId: id, txid }),
+        onCancel:  (id)        => reject({ iptal: true, odemeId: id }),
+        onError:   (e, odeme)  => reject({ hata: e, odeme }),
+      },
+    );
+  });
 
-        // Geri çağrım fonksiyonları
-        const geriCagrimlar = {
-            // Backend'e ödemeyi onayla
-            onReadyForServerApproval: (odemeId) => {
-                console.log('[AgroPi] Sunucu onayı bekleniyor. Ödeme ID:', odemeId);
-                resolve({ durum: 'onay_bekleniyor', odemeId });
-            },
-
-            // Backend'e ödemeyi tamamla
-            onReadyForServerCompletion: (odemeId, txId) => {
-                console.log('[AgroPi] Ödeme tamamlandı. TX:', txId);
-                resolve({ durum: 'tamamlandi', odemeId, txId });
-            },
-
-            // Kullanıcı iptali
-            onCancel: (odemeId) => {
-                console.log('[AgroPi] Ödeme iptal edildi:', odemeId);
-                reject({ iptal: true, odemeId });
-            },
-
-            // Hata
-            onError: (hata, odeme) => {
-                console.error('[AgroPi] Ödeme hatası:', hata);
-                reject({ hata, odeme });
-            },
-        };
-
-        try {
-            sdk.createPayment(odemeVerisi, geriCagrimlar);
-        } catch (hata) {
-            reject(hata);
-        }
-    });
-};
-
-// ─────────────────────────────────────────
-// Mevcut kullanıcıyı getir (cache'den)
-// ─────────────────────────────────────────
-export const mevcutPiKullanicisiniAl = () => {
-    if (!piBrowserMi()) {
-        return { uid: 'mock_uid_001', username: 'agropi_test', mockMod: true };
-    }
-    return null;
-};
+export const mevcutPiKullanicisiniAl = () =>
+  piBrowserMi() ? null : { uid: 'mock_uid_001', username: 'agropi_test', mockMod: true };
